@@ -1,17 +1,24 @@
-import { useEffect } from "react";
-import { db } from "./firebase";
-import { collection, getDocs } from "firebase/firestore";
-
+import { useState, useEffect } from "react";
+import { auth } from "./firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import Login from "./Login";
 function App() {
+  const [user, setUser] = useState(null);
+
   useEffect(() => {
-    const test = async () => {
-      const snap = await getDocs(collection(db, "test"));
-      snap.forEach((doc) => console.log(doc.id, doc.data()));
-    };
-    test();
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => unsub();
   }, []);
 
-  return <h1>Firebase conectado 🚀</h1>;
+  if (!user) return <Login onLogin={setUser} />;
+
+  return (
+    <div>
+      <h1>Bienvenido legajo: {user.email.split("@")[0]}</h1>
+      <button onClick={() => signOut(auth)}>Cerrar sesión</button>
+      {/* aquí luego agregás escaneo QR y registro */}
+    </div>
+  );
 }
 
 export default App;
