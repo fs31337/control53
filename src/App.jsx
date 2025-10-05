@@ -33,8 +33,7 @@ export default function App() {
   // Hook Konami: dispara confeti y alert
   useKonami(() => {
     setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 5000); // confeti 5 seg
-    alert("¡Konami code activado! 🎉");
+    setTimeout(() => setShowConfetti(false), 10000); // confeti 10 seg
   });
 
   return (
