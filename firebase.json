@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "qr-app/dist",
+    "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
