@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Button, Stack, Typography } from "@mui/material";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebaseConfig";
 
 import Layout from "./components/Layout";
@@ -12,10 +11,18 @@ import InternosStatus from "./pages/InternosStatus";
 import LegajoHistory from "./pages/LegajoHistory";
 import InternoHistory from "./pages/InternoHistory";
 
+// 🔹 Konami Code Hook y Confetti
+import { useKonami } from "./hooks/useKonami";
+import Confetti from "react-confetti";
+import { useWindowSize } from "react-use";
+
 export default function App() {
   const [user, setUser] = useState(null);
   const nav = useNavigate();
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useWindowSize();
 
+  // Mantener sesión / redirigir
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -23,8 +30,18 @@ export default function App() {
     });
   }, [nav]);
 
+  // Hook Konami: dispara confeti y alert
+  useKonami(() => {
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 5000); // confeti 5 seg
+    alert("¡Konami code activado! 🎉");
+  });
+
   return (
     <Layout user={user}>
+      {/* Confeti */}
+      {showConfetti && <Confetti width={width} height={height} />}
+
       <Routes>
         <Route path="/login" element={<Login onLogin={setUser} />} />
         <Route path="/scanner" element={<Scanner />} />
