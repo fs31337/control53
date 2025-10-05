@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { addInspection } from "../services";
-import { auth } from "../firebase";
+import { auth } from "../../firebaseConfig";
 import {
   Box,
   Stack,

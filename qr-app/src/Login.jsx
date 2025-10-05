@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth } from "./firebase";
+import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import {
   Box,
@@ -9,11 +9,13 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export default function Login({ onLogin }) {
   const [legajo, setLegajo] = useState("");
   const [dni, setDni] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // ← para redirigir después del login
 
   const handleLogin = async () => {
     setError("");
@@ -21,6 +23,7 @@ export default function Login({ onLogin }) {
       const email = `${legajo.trim()}@empresa.local`;
       const userCred = await signInWithEmailAndPassword(auth, email, dni);
       onLogin(userCred.user);
+      navigate("/internos"); // ← redirige después de logear
     } catch (err) {
       console.error(err);
       setError("Legajo o DNI incorrecto");
@@ -31,17 +34,19 @@ export default function Login({ onLogin }) {
     <Box
       sx={{
         width: "100%",
+        minHeight: "100vh",
         display: "flex",
         justifyContent: "center",
+        alignItems: "center",
         overflowX: "hidden", // evita scroll horizontal
-        mt: 4,
+        bgcolor: "background.default",
+        px: 2,
       }}
     >
       <Box
         sx={{
-          width: "100%", // ocupa todo el ancho disponible
-          maxWidth: 400, // límite máximo en desktop
-          px: 2, // padding lateral para que respire en móvil
+          width: "100%",
+          maxWidth: 400,
         }}
       >
         <Typography variant="h5" textAlign="center" mb={3}>

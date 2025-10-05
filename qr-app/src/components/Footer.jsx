@@ -1,3 +1,4 @@
+// Footer.jsx
 import { useState, useEffect } from "react";
 import {
   BottomNavigation,
@@ -17,10 +18,14 @@ export default function Footer() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // solo mostrar en tablet/móvil
+  // solo mostrar en móvil/tablet
   const isMobile = useMediaQuery("(max-width:900px)");
 
-  // sincronizar seleccionado con ruta actual
+  // ocultar en login
+  if (location.pathname === "/login" || !isMobile) {
+    return null;
+  }
+
   useEffect(() => {
     switch (location.pathname) {
       case "/scanner":
@@ -65,9 +70,6 @@ export default function Footer() {
         break;
     }
   };
-
-  // no renderizar nada en desktop
-  if (!isMobile) return null;
 
   return (
     <Paper

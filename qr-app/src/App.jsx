@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Stack, Typography } from "@mui/material";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth } from "../firebaseConfig";
 
 import Layout from "./components/Layout";
 import Login from "./Login";

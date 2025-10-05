@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { addInspection } from "../services";
-import { auth } from "../firebase";
+import { auth } from "../../firebaseConfig";
 import {
   Box,
   Stack,
