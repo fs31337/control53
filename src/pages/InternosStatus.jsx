@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Card,
-  CardContent,
   Grid,
   Stack,
   Typography,
@@ -10,10 +8,7 @@ import {
   MenuItem,
   ToggleButtonGroup,
   ToggleButton,
-  Pagination,
-  IconButton,
   Tooltip,
-  useMediaQuery,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import dayjs from "dayjs";
@@ -37,14 +32,9 @@ export default function InternosStatus() {
   const [category, setCategory] = useState("limpieza");
   const [search, setSearch] = useState("");
   const [sortByStale, setSortByStale] = useState("none");
-  const [page, setPage] = useState(1);
   const [lastMap, setLastMap] = useState(new Map());
   const [selected, setSelected] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-
-  // Detectar pantallas chicas (<400px)
-  const isSmall = useMediaQuery("(max-width:400px)");
-  const PAGE_SIZE = isSmall ? 10 : 24;
 
   useEffect(() => {
     const cat = category === "limpieza" ? "limpieza" : "taller";
@@ -81,9 +71,6 @@ export default function InternosStatus() {
     return enriched;
   }, [lastMap, search, sortByStale]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const paged = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   const handleOpenDetails = (rec) => {
     if (!rec) return;
     setSelected(rec);
@@ -102,12 +89,12 @@ export default function InternosStatus() {
         py: 2,
       }}
     >
-      <Box sx={{ width: "100%", maxWidth: 1200 }}>
+      <Box sx={{ width: "100%", maxWidth: "6000px" }}>
         <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          mb={2}
+          direction={{ size: "column", sm: "row" }}
+          spacing={3}
+          alignItems={{ size: "flex-start", sm: "center" }}
+          mb={8}
         >
           <Typography variant="h5">Estado de internos</Typography>
           <ToggleButtonGroup
@@ -123,15 +110,16 @@ export default function InternosStatus() {
             size="small"
             label="Buscar interno"
             placeholder="Ej: 12"
+            id="buscar-interno"
             value={search}
             onChange={(e) => {
-              setPage(1);
               setSearch(e.target.value);
             }}
           />
           <TextField
             size="small"
             select
+            id="ordenar-por"
             label="Ordenar por"
             value={sortByStale}
             onChange={(e) => setSortByStale(e.target.value)}
@@ -142,72 +130,67 @@ export default function InternosStatus() {
           </TextField>
         </Stack>
 
-        <Grid container spacing={2} justifyContent="center">
-          {paged.map(({ interno, rec, deltaDays, label }) => {
+        <Grid container spacing={1.5} justifyContent="center">
+          {rows.map(({ interno, rec, deltaDays, label }) => {
             const { border, bg } = colorByDays(deltaDays);
             return (
-              <Grid item xs={12} sm={6} md={3} lg={2} key={interno}>
-                <Card variant="outlined" sx={{ border, background: bg }}>
-                  <CardContent>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Typography variant="h6">#{interno}</Typography>
-                      {rec && (
-                        <Tooltip title="Ver detalle">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenDetails(rec)}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      Última revisión:
+              <Grid size="auto" key={interno}>
+                <Tooltip
+                  title={rec ? `Última revisión: ${label}` : "Sin registros"}
+                >
+                  <Box
+                    onClick={() => rec && handleOpenDetails(rec)}
+                    sx={{
+                      border,
+                      backgroundColor: bg,
+                      borderRadius: "10px", // más rectangular
+                      width: 120,
+                      height: 70,
+                      px: 1.5,
+                      py: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 600,
+                      color: "#212121",
+                      cursor: rec ? "pointer" : "default",
+                      userSelect: "none",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      transition: "all 0.15s ease",
+                      "&:hover": rec
+                        ? {
+                            transform: "scale(1.05)",
+                            boxShadow: "0 3px 6px rgba(0,0,0,0.15)",
+                          }
+                        : {},
+                    }}
+                  >
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                      #{interno}
                     </Typography>
                     <Typography
-                      variant="subtitle2"
+                      variant="caption"
                       sx={{
-                        cursor: rec ? "pointer" : "default",
-                        textDecoration: rec ? "underline" : "none",
+                        mt: 0.3,
+                        color: "text.secondary",
+                        textAlign: "center",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        display: "block",
+                        width: "100%",
                       }}
-                      onClick={() => rec && handleOpenDetails(rec)}
                     >
-                      {label}
+                      {rec
+                        ? dayjs(label, "DD/MM/YYYY HH:mm").format("DD/MM HH:mm")
+                        : "Sin datos"}
                     </Typography>
-                    {deltaDays != null && (
-                      <Typography variant="caption" color="text.secondary">
-                        Hace {deltaDays} día(s)
-                      </Typography>
-                    )}
-                    {!rec && (
-                      <Typography variant="caption" color="text.secondary">
-                        Sin registros
-                      </Typography>
-                    )}
-                  </CardContent>
-                </Card>
+                  </Box>
+                </Tooltip>
               </Grid>
             );
           })}
         </Grid>
-
-        <Stack alignItems="center" mt={3}>
-          <Pagination
-            count={pageCount}
-            page={page}
-            onChange={(_, p) => setPage(p)}
-            color="primary"
-          />
-        </Stack>
 
         <InspectionDetailsDialog
           open={detailsOpen}
