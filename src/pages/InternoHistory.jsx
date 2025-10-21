@@ -41,6 +41,12 @@ export default function InternoHistory() {
           label="Interno"
           value={interno}
           onChange={(e) => setInterno(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSearch();
+            }
+          }}
         />
         <Button
           variant="contained"
@@ -55,12 +61,12 @@ export default function InternoHistory() {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell>Interno</TableCell>
               <TableCell>Fecha</TableCell>
               <TableCell>Legajo</TableCell>
               <TableCell>Categoría</TableCell>
-              <TableCell>Acción</TableCell>
+              <TableCell>SubCategoria</TableCell>
               <TableCell>Observaciones</TableCell>
-              <TableCell>Método</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -70,12 +76,12 @@ export default function InternoHistory() {
                 : "—";
               return (
                 <TableRow key={r.id}>
+                  <TableCell>{r.interno}</TableCell>
                   <TableCell>{fecha}</TableCell>
                   <TableCell>{r.legajo}</TableCell>
                   <TableCell>{r.categoria}</TableCell>
-                  <TableCell>{r.accion || "—"}</TableCell>
+                  <TableCell>{r.subcategoria}</TableCell>
                   <TableCell>{r.observaciones || "—"}</TableCell>
-                  <TableCell>{r.metodo}</TableCell>
                 </TableRow>
               );
             })}

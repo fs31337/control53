@@ -1,4 +1,3 @@
-// Footer.jsx
 import { useState, useEffect } from "react";
 import {
   BottomNavigation,
@@ -18,13 +17,8 @@ export default function Footer() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // solo mostrar en móvil/tablet
+  // Hook siempre fuera de condicionales
   const isMobile = useMediaQuery("(max-width:900px)");
-
-  // ocultar en login
-  if (location.pathname === "/login" || !isMobile) {
-    return null;
-  }
 
   useEffect(() => {
     switch (location.pathname) {
@@ -70,6 +64,11 @@ export default function Footer() {
         break;
     }
   };
+
+  // 👇 Condicional de render, pero después de los hooks
+  if (location.pathname === "/login" || !isMobile) {
+    return null;
+  }
 
   return (
     <Paper

@@ -139,7 +139,7 @@ export default function Layout({ children, user }) {
           py: 2,
         }}
       >
-        <Box sx={{ width: "100%", maxWidth: 1200 }}>{children}</Box>
+        <Box sx={{ width: "100%", maxWidth: 1800 }}>{children}</Box>
       </Box>
 
       <Footer />

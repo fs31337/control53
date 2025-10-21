@@ -1,29 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Card,
-  CardContent,
   Grid,
   Stack,
   Typography,
   TextField,
   MenuItem,
-  ToggleButtonGroup,
-  ToggleButton,
-  Pagination,
-  IconButton,
   Tooltip,
-  useMediaQuery,
 } from "@mui/material";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import InspectionDetailsDialog from "../components/InspectionDetailDialog";
-import { fetchLastByInternoForCategory } from "../services";
+import { subscribeToCategoryAndSubcategoryChanges } from "../services";
+import CategoryFilter from "../components/CategoryFilter";
 
 dayjs.extend(relativeTime);
 
-const ALL_INTERNALS = Array.from({ length: 105 }, (_, i) => i + 1);
+const ALL_INTERNALS = Array.from({ length: 108 }, (_, i) => i + 1);
 
 function colorByDays(deltaDays) {
   if (deltaDays == null) return { border: "2px solid #9e9e9e", bg: "#f5f5f5" };
@@ -35,21 +28,52 @@ function colorByDays(deltaDays) {
 
 export default function InternosStatus() {
   const [category, setCategory] = useState("limpieza");
+  const [subCategory, setSubCategory] = useState("");
   const [search, setSearch] = useState("");
   const [sortByStale, setSortByStale] = useState("none");
-  const [page, setPage] = useState(1);
   const [lastMap, setLastMap] = useState(new Map());
   const [selected, setSelected] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [flashInternos, setFlashInternos] = useState(new Set());
 
-  // Detectar pantallas chicas (<400px)
-  const isSmall = useMediaQuery("(max-width:400px)");
-  const PAGE_SIZE = isSmall ? 10 : 24;
-
+  // ✅ Cache + subscripción unificada
   useEffect(() => {
-    const cat = category === "limpieza" ? "limpieza" : "taller";
-    fetchLastByInternoForCategory(cat).then(setLastMap);
-  }, [category]);
+    if (!category) return;
+
+    const cacheKey = `lastMap_${category}_${subCategory}`;
+
+    // Cargar cache inicial
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) setLastMap(new Map(JSON.parse(cached)));
+
+    // Bandera para evitar el flash en el primer render
+    let firstRender = true;
+
+    const handleUpdate = (data, changed) => {
+      setLastMap(data);
+      sessionStorage.setItem(
+        cacheKey,
+        JSON.stringify(Array.from(data.entries()))
+      );
+
+      // Solo mostrar el flash si no es el primer render y hay cambios
+      if (!firstRender && changed.size > 0) {
+        setFlashInternos(changed);
+        setTimeout(() => setFlashInternos(new Set()), 1500);
+      }
+
+      firstRender = false;
+    };
+
+    // Suscribirse a Firestore según haya subcategoría o no
+    const unsubscribe = subscribeToCategoryAndSubcategoryChanges(
+      category,
+      subCategory,
+      handleUpdate
+    );
+
+    return () => unsubscribe();
+  }, [category, subCategory]);
 
   const rows = useMemo(() => {
     const term = search.trim();
@@ -70,19 +94,14 @@ export default function InternosStatus() {
       return { interno, rec, date, deltaDays, label };
     });
 
-    if (sortByStale === "desc") {
+    if (sortByStale === "desc")
       enriched.sort((a, b) => (b.deltaDays ?? 9999) - (a.deltaDays ?? 9999));
-    } else if (sortByStale === "asc") {
+    else if (sortByStale === "asc")
       enriched.sort((a, b) => (a.deltaDays ?? 9999) - (b.deltaDays ?? 9999));
-    } else {
-      enriched.sort((a, b) => Number(a.interno) - Number(b.interno));
-    }
+    else enriched.sort((a, b) => Number(a.interno) - Number(b.interno));
 
     return enriched;
   }, [lastMap, search, sortByStale]);
-
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const paged = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleOpenDetails = (rec) => {
     if (!rec) return;
@@ -95,39 +114,35 @@ export default function InternosStatus() {
       sx={{
         width: "100%",
         minHeight: "100vh",
-        bgcolor: "background.default", // fondo blanco de Material UI
+        bgcolor: "background.default",
         display: "flex",
         justifyContent: "center",
         overflowX: "hidden",
         py: 2,
       }}
     >
-      <Box sx={{ width: "100%", maxWidth: 1200 }}>
+      <Box sx={{ width: "100%", maxWidth: "6000px" }}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={2}
+          spacing={3}
           alignItems={{ xs: "flex-start", sm: "center" }}
-          mb={2}
+          mb={8}
         >
           <Typography variant="h5">Estado de internos</Typography>
-          <ToggleButtonGroup
-            size="small"
-            value={category}
-            exclusive
-            onChange={(_, val) => val && setCategory(val)}
-          >
-            <ToggleButton value="limpieza">Limpieza interior</ToggleButton>
-            <ToggleButton value="radiador">Limpieza radiador</ToggleButton>
-          </ToggleButtonGroup>
+          <CategoryFilter
+            categoria={category}
+            subcategoria={subCategory}
+            onChange={(cat, sub) => {
+              setCategory(cat);
+              setSubCategory(sub);
+            }}
+          />
           <TextField
             size="small"
             label="Buscar interno"
             placeholder="Ej: 12"
             value={search}
-            onChange={(e) => {
-              setPage(1);
-              setSearch(e.target.value);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
           <TextField
             size="small"
@@ -142,72 +157,57 @@ export default function InternosStatus() {
           </TextField>
         </Stack>
 
-        <Grid container spacing={2} justifyContent="center">
-          {paged.map(({ interno, rec, deltaDays, label }) => {
+        <Grid container spacing={1.5} justifyContent="center">
+          {rows.map(({ interno, rec, deltaDays, label, date }) => {
             const { border, bg } = colorByDays(deltaDays);
+            const isFlashing = flashInternos.has(interno);
             return (
-              <Grid item xs={12} sm={6} md={3} lg={2} key={interno}>
-                <Card variant="outlined" sx={{ border, background: bg }}>
-                  <CardContent>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Typography variant="h6">#{interno}</Typography>
-                      {rec && (
-                        <Tooltip title="Ver detalle">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenDetails(rec)}
-                          >
-                            <InfoOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      Última revisión:
+              <Grid key={interno}>
+                <Tooltip
+                  title={rec ? `Última revisión: ${label}` : "Sin registros"}
+                >
+                  <Box
+                    onClick={() => rec && handleOpenDetails(rec)}
+                    sx={{
+                      border,
+                      backgroundColor: bg,
+                      borderRadius: "10px",
+                      width: 120,
+                      height: 70,
+                      px: 1.5,
+                      py: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 600,
+                      color: "#212121",
+                      cursor: rec ? "pointer" : "default",
+                      userSelect: "none",
+                      boxShadow: isFlashing
+                        ? "0 0 10px 4px rgba(0, 200, 0, 0.4)"
+                        : "0 2px 4px rgba(0,0,0,0.1)",
+                      transition: "all 0.3s ease",
+                      "&:hover": rec ? { transform: "scale(1.05)" } : {},
+                    }}
+                  >
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                      #{interno}
                     </Typography>
                     <Typography
-                      variant="subtitle2"
-                      sx={{
-                        cursor: rec ? "pointer" : "default",
-                        textDecoration: rec ? "underline" : "none",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "block",
-                      }}
-                      onClick={() => rec && handleOpenDetails(rec)}
+                      variant="caption"
+                      sx={{ mt: 0.3, color: "text.secondary" }}
                     >
-                      {label}
+                      {rec && date
+                        ? dayjs(date).format("DD/MM HH:mm")
+                        : "Sin datos"}
                     </Typography>
-                    {deltaDays != null && (
-                      <Typography variant="caption" color="text.secondary">
-                        Hace {deltaDays} día(s)
-                      </Typography>
-                    )}
-                    {!rec && (
-                      <Typography variant="caption" color="text.secondary">
-                        Sin registros
-                      </Typography>
-                    )}
-                  </CardContent>
-                </Card>
+                  </Box>
+                </Tooltip>
               </Grid>
             );
           })}
         </Grid>
-
-        <Stack alignItems="center" mt={3}>
-          <Pagination
-            count={pageCount}
-            page={page}
-            onChange={(_, p) => setPage(p)}
-            color="primary"
-          />
-        </Stack>
 
         <InspectionDetailsDialog
           open={detailsOpen}

@@ -45,6 +45,12 @@ export default function LegajoHistory() {
           label="Legajo"
           value={legajo}
           onChange={(e) => setLegajo(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              load();
+            }
+          }}
         />
         <Button variant="contained" onClick={load} disabled={!legajo.trim()}>
           Buscar
@@ -55,12 +61,12 @@ export default function LegajoHistory() {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell>Legajo</TableCell>
               <TableCell>Fecha</TableCell>
               <TableCell>Interno</TableCell>
               <TableCell>Categoría</TableCell>
-              <TableCell>Acción</TableCell>
+              <TableCell>SubCategoria</TableCell>
               <TableCell>Observaciones</TableCell>
-              <TableCell>Método</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -70,12 +76,13 @@ export default function LegajoHistory() {
                 : "—";
               return (
                 <TableRow key={r.id}>
+                  <TableCell>{r.legajo}</TableCell>
                   <TableCell>{fecha}</TableCell>
                   <TableCell>{r.interno}</TableCell>
                   <TableCell>{r.categoria}</TableCell>
-                  <TableCell>{r.accion || "—"}</TableCell>
-                  <TableCell>{r.observaciones || "—"}</TableCell>
-                  <TableCell>{r.metodo}</TableCell>
+                  <TableCell>{r.subcategoria}</TableCell>
+
+                  <TableCell>{r.observaciones || "Sin observacion"}</TableCell>
                 </TableRow>
               );
             })}

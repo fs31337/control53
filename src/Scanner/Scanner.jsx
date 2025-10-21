@@ -15,7 +15,6 @@ import {
 export default function Scanner() {
   const videoRef = useRef(null);
   const [categoria, setCategoria] = useState("limpieza");
-  const [accion, setAccion] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [interno, setInterno] = useState("");
   const [scanned, setScanned] = useState(false);
@@ -66,13 +65,12 @@ export default function Scanner() {
         legajo,
         interno,
         categoria,
-        accion,
+        subcategoria,
         observaciones,
         metodo: "qr",
       });
       setMensaje(`Registro guardado para interno ${interno}`);
       setInterno("");
-      setAccion("");
       setObservaciones("");
       setScanned(false);
     } catch (err) {
@@ -100,12 +98,6 @@ export default function Scanner() {
             <MenuItem value="inspeccion">Inspección</MenuItem>
             <MenuItem value="otro">Otro</MenuItem>
           </Select>
-          <TextField
-            fullWidth
-            label="Acción (opcional)"
-            value={accion}
-            onChange={(e) => setAccion(e.target.value)}
-          />
           <TextField
             fullWidth
             multiline
