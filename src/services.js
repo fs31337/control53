@@ -9,6 +9,7 @@ import {
   query,
   where,
   limit,
+  onSnapshot,
 } from "firebase/firestore";
 /**
  * Guarda inspección en la colección "inspections"
@@ -17,6 +18,7 @@ export async function addInspection({
   legajo,
   interno,
   categoria,
+  subcategoria,
   accion = "",
   observaciones = "",
   metodo = "qr",
@@ -26,6 +28,7 @@ export async function addInspection({
     legajo,
     interno,
     categoria,
+    subcategoria,
     accion,
     observaciones,
     metodo,
@@ -58,24 +61,94 @@ export async function fetchInspections({
  * keys: interno (string/number) -> value: doc {id, ...data}
  * Para eficiencia: traemos las inspecciones más recientes y calculamos en cliente.
  */
-export async function fetchLastByInternoForCategory(category, maxFetch = 3000) {
+// export async function fetchLastByInternoForCategory(category, maxFetch = 3000) {
+//   const inspectionsRef = collection(db, "inspections");
+//   // Traemos recientes por fecha desc (límite alto razonable)
+//   const q = query(
+//     inspectionsRef,
+//     orderBy("createdAt", "desc"),
+//     limit(maxFetch)
+//   );
+//   const snap = await getDocs(q);
+//   const map = new Map();
+//   snap.forEach((d) => {
+//     const val = d.data();
+//     if (val.categoria !== category) return;
+//     const internoKey = String(val.interno);
+//     // si aún no registramos este interno, este es el más reciente
+//     if (!map.has(internoKey)) map.set(internoKey, { id: d.id, ...val });
+//   });
+//   return map;
+// }
+/**
+ * Devuelve un Map con la última inspección por interno para una categoría y subcategoría.
+ * @param {string} category - Ej: "interiores"
+ * @param {string} subcategory - Ej: "pisos"
+ * @param {number} maxFetch - Límite de documentos a leer
+ * @returns {Promise<Map<string, any>>}
+ */
+export async function fetchLastByInternoForCategoryAndSubcategory(
+  category,
+  subcategory,
+  maxFetch = 3000
+) {
   const inspectionsRef = collection(db, "inspections");
-  // Traemos recientes por fecha desc (límite alto razonable)
+
   const q = query(
     inspectionsRef,
+    where("categoria", "==", category),
+    where("subcategoria", "==", subcategory),
     orderBy("createdAt", "desc"),
     limit(maxFetch)
   );
+
   const snap = await getDocs(q);
   const map = new Map();
   snap.forEach((d) => {
     const val = d.data();
-    if (val.categoria !== category) return;
     const internoKey = String(val.interno);
-    // si aún no registramos este interno, este es el más reciente
-    if (!map.has(internoKey)) map.set(internoKey, { id: d.id, ...val });
+    if (!map.has(internoKey)) {
+      map.set(internoKey, { id: d.id, ...val });
+    }
   });
+
   return map;
+}
+/**
+ * Suscribe en tiempo real a una categoría + subcategoría.
+ * @param {string} category - Ej: "interiores"
+ * @param {string} subcategory - Ej: "pisos"
+ * @param {(data: Map<string, any>, changedKeys: Set<string>) => void} callback
+ */
+export function subscribeToCategoryAndSubcategoryChanges(
+  category,
+  subcategory,
+  callback
+) {
+  const q = query(
+    collection(db, "inspections"),
+    where("categoria", "==", category),
+    where("subcategoria", "==", subcategory)
+  );
+
+  const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const newData = await fetchLastByInternoForCategoryAndSubcategory(
+      category,
+      subcategory
+    );
+
+    const changed = new Set();
+    snapshot.docChanges().forEach((change) => {
+      if (["added", "modified"].includes(change.type)) {
+        const interno = change.doc.data().interno;
+        if (interno) changed.add(String(interno));
+      }
+    });
+
+    callback(newData, changed);
+  });
+
+  return unsubscribe;
 }
 
 /** Historial por legajo (simple: where y luego ordena cliente-side) */
