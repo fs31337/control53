@@ -26,19 +26,17 @@ export default function InspectionDetailsDialog({ open, onClose, inspection }) {
             <b>Categoría:</b> {inspection.categoria}
           </Typography>
           <Typography>
-            <b>Acción:</b> {inspection.accion || "—"}
+            <b>SubCategoria:</b> {inspection.subcategoria}
           </Typography>
           <Typography>
-            <b>Observaciones:</b> {inspection.observaciones || "—"}
+            <b>Observaciones:</b>{" "}
+            {inspection.observaciones || "Sin observaciones"}
           </Typography>
           <Typography>
             <b>Legajo:</b> {inspection.legajo}
           </Typography>
           <Typography>
             <b>Fecha:</b> {fecha}
-          </Typography>
-          <Typography>
-            <b>Método:</b> {inspection.metodo}
           </Typography>
         </Stack>
       </DialogContent>
