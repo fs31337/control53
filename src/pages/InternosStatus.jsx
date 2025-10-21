@@ -6,19 +6,17 @@ import {
   Typography,
   TextField,
   MenuItem,
-  ToggleButtonGroup,
-  ToggleButton,
   Tooltip,
 } from "@mui/material";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import InspectionDetailsDialog from "../components/InspectionDetailDialog";
-import { fetchLastByInternoForCategory } from "../services";
+import { subscribeToCategoryAndSubcategoryChanges } from "../services";
+import CategoryFilter from "../components/CategoryFilter";
 
 dayjs.extend(relativeTime);
 
-const ALL_INTERNALS = Array.from({ length: 105 }, (_, i) => i + 1);
+const ALL_INTERNALS = Array.from({ length: 108 }, (_, i) => i + 1);
 
 function colorByDays(deltaDays) {
   if (deltaDays == null) return { border: "2px solid #9e9e9e", bg: "#f5f5f5" };
@@ -30,16 +28,52 @@ function colorByDays(deltaDays) {
 
 export default function InternosStatus() {
   const [category, setCategory] = useState("limpieza");
+  const [subCategory, setSubCategory] = useState("");
   const [search, setSearch] = useState("");
   const [sortByStale, setSortByStale] = useState("none");
   const [lastMap, setLastMap] = useState(new Map());
   const [selected, setSelected] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [flashInternos, setFlashInternos] = useState(new Set());
 
+  // ✅ Cache + subscripción unificada
   useEffect(() => {
-    const cat = category === "limpieza" ? "limpieza" : "taller";
-    fetchLastByInternoForCategory(cat).then(setLastMap);
-  }, [category]);
+    if (!category) return;
+
+    const cacheKey = `lastMap_${category}_${subCategory}`;
+
+    // Cargar cache inicial
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) setLastMap(new Map(JSON.parse(cached)));
+
+    // Bandera para evitar el flash en el primer render
+    let firstRender = true;
+
+    const handleUpdate = (data, changed) => {
+      setLastMap(data);
+      sessionStorage.setItem(
+        cacheKey,
+        JSON.stringify(Array.from(data.entries()))
+      );
+
+      // Solo mostrar el flash si no es el primer render y hay cambios
+      if (!firstRender && changed.size > 0) {
+        setFlashInternos(changed);
+        setTimeout(() => setFlashInternos(new Set()), 1500);
+      }
+
+      firstRender = false;
+    };
+
+    // Suscribirse a Firestore según haya subcategoría o no
+    const unsubscribe = subscribeToCategoryAndSubcategoryChanges(
+      category,
+      subCategory,
+      handleUpdate
+    );
+
+    return () => unsubscribe();
+  }, [category, subCategory]);
 
   const rows = useMemo(() => {
     const term = search.trim();
@@ -60,13 +94,11 @@ export default function InternosStatus() {
       return { interno, rec, date, deltaDays, label };
     });
 
-    if (sortByStale === "desc") {
+    if (sortByStale === "desc")
       enriched.sort((a, b) => (b.deltaDays ?? 9999) - (a.deltaDays ?? 9999));
-    } else if (sortByStale === "asc") {
+    else if (sortByStale === "asc")
       enriched.sort((a, b) => (a.deltaDays ?? 9999) - (b.deltaDays ?? 9999));
-    } else {
-      enriched.sort((a, b) => Number(a.interno) - Number(b.interno));
-    }
+    else enriched.sort((a, b) => Number(a.interno) - Number(b.interno));
 
     return enriched;
   }, [lastMap, search, sortByStale]);
@@ -82,7 +114,7 @@ export default function InternosStatus() {
       sx={{
         width: "100%",
         minHeight: "100vh",
-        bgcolor: "background.default", // fondo blanco de Material UI
+        bgcolor: "background.default",
         display: "flex",
         justifyContent: "center",
         overflowX: "hidden",
@@ -91,35 +123,30 @@ export default function InternosStatus() {
     >
       <Box sx={{ width: "100%", maxWidth: "6000px" }}>
         <Stack
-          direction={{ size: "column", sm: "row" }}
+          direction={{ xs: "column", sm: "row" }}
           spacing={3}
-          alignItems={{ size: "flex-start", sm: "center" }}
+          alignItems={{ xs: "flex-start", sm: "center" }}
           mb={8}
         >
           <Typography variant="h5">Estado de internos</Typography>
-          <ToggleButtonGroup
-            size="small"
-            value={category}
-            exclusive
-            onChange={(_, val) => val && setCategory(val)}
-          >
-            <ToggleButton value="limpieza">Limpieza interior</ToggleButton>
-            <ToggleButton value="radiador">Limpieza radiador</ToggleButton>
-          </ToggleButtonGroup>
-          <TextField
-            size="small"
-            label="Buscar interno"
-            placeholder="Ej: 12"
-            id="buscar-interno"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+          <CategoryFilter
+            categoria={category}
+            subcategoria={subCategory}
+            onChange={(cat, sub) => {
+              setCategory(cat);
+              setSubCategory(sub);
             }}
           />
           <TextField
             size="small"
+            label="Buscar interno"
+            placeholder="Ej: 12"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <TextField
+            size="small"
             select
-            id="ordenar-por"
             label="Ordenar por"
             value={sortByStale}
             onChange={(e) => setSortByStale(e.target.value)}
@@ -131,10 +158,11 @@ export default function InternosStatus() {
         </Stack>
 
         <Grid container spacing={1.5} justifyContent="center">
-          {rows.map(({ interno, rec, deltaDays, label }) => {
+          {rows.map(({ interno, rec, deltaDays, label, date }) => {
             const { border, bg } = colorByDays(deltaDays);
+            const isFlashing = flashInternos.has(interno);
             return (
-              <Grid size="auto" key={interno}>
+              <Grid key={interno}>
                 <Tooltip
                   title={rec ? `Última revisión: ${label}` : "Sin registros"}
                 >
@@ -143,7 +171,7 @@ export default function InternosStatus() {
                     sx={{
                       border,
                       backgroundColor: bg,
-                      borderRadius: "10px", // más rectangular
+                      borderRadius: "10px",
                       width: 120,
                       height: 70,
                       px: 1.5,
@@ -156,14 +184,11 @@ export default function InternosStatus() {
                       color: "#212121",
                       cursor: rec ? "pointer" : "default",
                       userSelect: "none",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      transition: "all 0.15s ease",
-                      "&:hover": rec
-                        ? {
-                            transform: "scale(1.05)",
-                            boxShadow: "0 3px 6px rgba(0,0,0,0.15)",
-                          }
-                        : {},
+                      boxShadow: isFlashing
+                        ? "0 0 10px 4px rgba(0, 200, 0, 0.4)"
+                        : "0 2px 4px rgba(0,0,0,0.1)",
+                      transition: "all 0.3s ease",
+                      "&:hover": rec ? { transform: "scale(1.05)" } : {},
                     }}
                   >
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
@@ -171,18 +196,10 @@ export default function InternosStatus() {
                     </Typography>
                     <Typography
                       variant="caption"
-                      sx={{
-                        mt: 0.3,
-                        color: "text.secondary",
-                        textAlign: "center",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        width: "100%",
-                      }}
+                      sx={{ mt: 0.3, color: "text.secondary" }}
                     >
-                      {rec
-                        ? dayjs(label, "DD/MM/YYYY HH:mm").format("DD/MM HH:mm")
+                      {rec && date
+                        ? dayjs(date).format("DD/MM HH:mm")
                         : "Sin datos"}
                     </Typography>
                   </Box>
