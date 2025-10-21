@@ -10,12 +10,15 @@ import {
   MenuItem,
   Button,
   Alert,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
+import { CATEGORIAS } from "../constants/categories"; // importa tus categorías
 
 export default function ManualForm() {
-  const [categoria, setCategoria] = useState("limpieza");
+  const [categoria, setCategoria] = useState("");
+  const [subcategoria, setSubcategoria] = useState("");
   const [interno, setInterno] = useState("");
-  const [accion, setAccion] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
@@ -26,23 +29,26 @@ export default function ManualForm() {
   const handleSubmit = async () => {
     setError("");
     setMensaje("");
-    if (!interno) {
-      setError("Debes ingresar el número de interno");
-      return;
-    }
+
+    if (!categoria) return setError("Debes seleccionar una categoría");
+    if (!subcategoria) return setError("Debes seleccionar una subcategoría");
+    if (!interno) return setError("Debes ingresar el número de interno");
+
     try {
       await addInspection({
         legajo,
         interno,
         categoria,
-        accion,
+        subcategoria,
         observaciones,
         metodo: "manual",
       });
+
       setMensaje(`Registro guardado para interno ${interno}`);
       setInterno("");
-      setAccion("");
       setObservaciones("");
+      setCategoria("");
+      setSubcategoria("");
     } catch (err) {
       setError("Error guardando: " + err.message);
     }
@@ -58,17 +64,44 @@ export default function ManualForm() {
         </Typography>
 
         <Stack spacing={2} mb={2}>
-          <Select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="limpieza">Limpieza</MenuItem>
-            <MenuItem value="taller">Taller</MenuItem>
-            <MenuItem value="inspeccion">Inspección</MenuItem>
-            <MenuItem value="otro">Otro</MenuItem>
-          </Select>
+          {/* Select Categoría */}
+          <FormControl fullWidth>
+            <InputLabel>Categoría</InputLabel>
+            <Select
+              value={categoria}
+              label="Categoría"
+              onChange={(e) => {
+                setCategoria(e.target.value);
+                setSubcategoria("");
+              }}
+            >
+              {Object.keys(CATEGORIAS).map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat.replace("_", " ")}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
+          {/* Select Subcategoría */}
+          {categoria && (
+            <FormControl fullWidth>
+              <InputLabel>Subcategoría</InputLabel>
+              <Select
+                value={subcategoria}
+                label="Subcategoría"
+                onChange={(e) => setSubcategoria(e.target.value)}
+              >
+                {CATEGORIAS[categoria].map((sub) => (
+                  <MenuItem key={sub} value={sub}>
+                    {sub}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {/* Número de interno */}
           <TextField
             fullWidth
             label="Número de interno"
@@ -76,13 +109,7 @@ export default function ManualForm() {
             onChange={(e) => setInterno(e.target.value)}
           />
 
-          <TextField
-            fullWidth
-            label="Acción (opcional)"
-            value={accion}
-            onChange={(e) => setAccion(e.target.value)}
-          />
-
+          {/* Observaciones */}
           <TextField
             fullWidth
             multiline
@@ -93,6 +120,7 @@ export default function ManualForm() {
           />
         </Stack>
 
+        {/* Botones */}
         <Stack direction="row" spacing={2} justifyContent="center">
           <Button variant="contained" color="primary" onClick={handleSubmit}>
             Guardar
@@ -101,8 +129,9 @@ export default function ManualForm() {
             variant="outlined"
             onClick={() => {
               setInterno("");
-              setAccion("");
               setObservaciones("");
+              setCategoria("");
+              setSubcategoria("");
               setMensaje("");
               setError("");
             }}
