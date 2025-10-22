@@ -6,14 +6,10 @@ import {
   Stack,
   Typography,
   TextField,
-  Select,
-  MenuItem,
   Button,
   Alert,
-  InputLabel,
-  FormControl,
 } from "@mui/material";
-import { CATEGORIAS } from "../constants/categories"; // importa tus categorías
+import CategoryFilter from "../components/CategoryFilter"; // 👈 Importa tu componente de filtro
 
 export default function ManualForm() {
   const [categoria, setCategoria] = useState("");
@@ -32,7 +28,7 @@ export default function ManualForm() {
 
     if (!categoria) return setError("Debes seleccionar una categoría");
     if (!subcategoria) return setError("Debes seleccionar una subcategoría");
-    if (!interno) return setError("Debes ingresar el número de interno");
+    if (!interno.trim()) return setError("Debes ingresar el número de interno");
 
     try {
       await addInspection({
@@ -44,7 +40,7 @@ export default function ManualForm() {
         metodo: "manual",
       });
 
-      setMensaje(`Registro guardado para interno ${interno}`);
+      setMensaje(`Registro guardado correctamente para el interno ${interno}`);
       setInterno("");
       setObservaciones("");
       setCategoria("");
@@ -56,50 +52,29 @@ export default function ManualForm() {
 
   return (
     <Box
-      sx={{ width: "100%", display: "flex", justifyContent: "center", mt: 2 }}
+      sx={{
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        mt: 2,
+        px: 2,
+      }}
     >
       <Box sx={{ width: "100%", maxWidth: 480 }}>
         <Typography variant="h5" textAlign="center" mb={2}>
           Carga Manual
         </Typography>
 
-        <Stack spacing={2} mb={2}>
-          {/* Select Categoría */}
-          <FormControl fullWidth>
-            <InputLabel>Categoría</InputLabel>
-            <Select
-              value={categoria}
-              label="Categoría"
-              onChange={(e) => {
-                setCategoria(e.target.value);
-                setSubcategoria("");
-              }}
-            >
-              {Object.keys(CATEGORIAS).map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat.replace("_", " ")}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Select Subcategoría */}
-          {categoria && (
-            <FormControl fullWidth>
-              <InputLabel>Subcategoría</InputLabel>
-              <Select
-                value={subcategoria}
-                label="Subcategoría"
-                onChange={(e) => setSubcategoria(e.target.value)}
-              >
-                {CATEGORIAS[categoria].map((sub) => (
-                  <MenuItem key={sub} value={sub}>
-                    {sub}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
+        <Stack spacing={3} mb={2}>
+          {/* ✅ Selector de categoría y subcategoría visual */}
+          <CategoryFilter
+            categoria={categoria}
+            subcategoria={subcategoria}
+            onChange={(cat, sub) => {
+              setCategoria(cat);
+              setSubcategoria(sub);
+            }}
+          />
 
           {/* Número de interno */}
           <TextField
