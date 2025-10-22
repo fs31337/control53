@@ -7,18 +7,20 @@ import {
   Stack,
   Typography,
   TextField,
-  Select,
-  MenuItem,
   Button,
+  Alert,
 } from "@mui/material";
+import CategoryFilter from "../components/CategoryFilter"; // 👈 Importa el mismo componente visual
 
 export default function Scanner() {
   const videoRef = useRef(null);
-  const [categoria, setCategoria] = useState("limpieza");
+  const [categoria, setCategoria] = useState("");
+  const [subcategoria, setSubcategoria] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [interno, setInterno] = useState("");
   const [scanned, setScanned] = useState(false);
   const [mensaje, setMensaje] = useState("");
+  const [error, setError] = useState("");
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -27,10 +29,12 @@ export default function Scanner() {
 
   const legajo = user ? user.email.split("@")[0] : "";
 
+  // 🎯 Lector QR
   useEffect(() => {
     if (!videoRef.current) return;
     const codeReader = new BrowserMultiFormatReader();
     let controls;
+
     codeReader
       .decodeFromVideoDevice(
         null,
@@ -45,7 +49,7 @@ export default function Scanner() {
             } catch {}
             setInterno(text);
             setScanned(true);
-            setMensaje("Código escaneado, revisa y pulsa Enviar");
+            setMensaje("Código escaneado. Revisá los datos y pulsá Enviar.");
           }
         }
       )
@@ -53,13 +57,21 @@ export default function Scanner() {
         console.error(err);
         setMensaje("Error al acceder a la cámara: " + err.message);
       });
+
     return () => {
       if (controls) controls.stop();
     };
   }, [scanned]);
 
+  // 🧾 Enviar registro
   const handleEnviar = async () => {
-    if (!interno) return;
+    setError("");
+    setMensaje("");
+
+    if (!categoria) return setError("Debes seleccionar una categoría");
+    if (!subcategoria) return setError("Debes seleccionar una subcategoría");
+    if (!interno) return setError("No se detectó el número de interno");
+
     try {
       await addInspection({
         legajo,
@@ -69,18 +81,27 @@ export default function Scanner() {
         observaciones,
         metodo: "qr",
       });
-      setMensaje(`Registro guardado para interno ${interno}`);
+
+      setMensaje(`Registro guardado correctamente para interno ${interno}`);
       setInterno("");
       setObservaciones("");
+      setCategoria("");
+      setSubcategoria("");
       setScanned(false);
     } catch (err) {
-      setMensaje("Error guardando: " + err.message);
+      setError("Error guardando: " + err.message);
     }
   };
 
   return (
     <Box
-      sx={{ width: "100%", display: "flex", justifyContent: "center", mt: 2 }}
+      sx={{
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        mt: 2,
+        px: 2,
+      }}
     >
       <Box sx={{ width: "100%", maxWidth: 480 }}>
         <Typography variant="h5" textAlign="center" mb={2}>
@@ -88,16 +109,17 @@ export default function Scanner() {
         </Typography>
 
         <Stack spacing={2} mb={2}>
-          <Select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="limpieza">Limpieza</MenuItem>
-            <MenuItem value="taller">Taller</MenuItem>
-            <MenuItem value="inspeccion">Inspección</MenuItem>
-            <MenuItem value="otro">Otro</MenuItem>
-          </Select>
+          {/* ✅ Filtro de categoría/subcategoría */}
+          <CategoryFilter
+            categoria={categoria}
+            subcategoria={subcategoria}
+            onChange={(cat, sub) => {
+              setCategoria(cat);
+              setSubcategoria(sub);
+            }}
+          />
+
+          {/* Observaciones */}
           <TextField
             fullWidth
             multiline
@@ -108,13 +130,19 @@ export default function Scanner() {
           />
         </Stack>
 
+        {/* 🎥 Vista de cámara */}
         {!scanned && (
           <video
             ref={videoRef}
-            style={{ width: "100%", border: "2px solid #ccc", borderRadius: 8 }}
+            style={{
+              width: "100%",
+              border: "2px solid #ccc",
+              borderRadius: 8,
+            }}
           />
         )}
 
+        {/* ✅ Datos escaneados */}
         {scanned && (
           <Box
             sx={{
@@ -129,6 +157,7 @@ export default function Scanner() {
             <Typography variant="subtitle1">
               <strong>Interno:</strong> {interno}
             </Typography>
+
             <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
               <Button
                 variant="contained"
@@ -142,6 +171,8 @@ export default function Scanner() {
                 onClick={() => {
                   setInterno("");
                   setScanned(false);
+                  setMensaje("");
+                  setError("");
                 }}
               >
                 Escanear otro
@@ -150,15 +181,16 @@ export default function Scanner() {
           </Box>
         )}
 
+        {/* Mensajes */}
         {mensaje && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            mt={2}
-            textAlign="center"
-          >
+          <Alert severity="success" sx={{ mt: 2 }}>
             {mensaje}
-          </Typography>
+          </Alert>
+        )}
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
         )}
       </Box>
     </Box>
