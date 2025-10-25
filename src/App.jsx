@@ -10,6 +10,7 @@ import ManualForm from "./ManualForm/ManualForm";
 import InternosStatus from "./pages/InternosStatus";
 import LegajoHistory from "./pages/LegajoHistory";
 import InternoHistory from "./pages/InternoHistory";
+import PlayaStatus from "./pages/PlayaStatus";
 
 // 🔹 Konami Code Hook y Confetti
 import { useKonami } from "./hooks/useKonami";
@@ -48,6 +49,8 @@ export default function App() {
         <Route path="/internos" element={<InternosStatus />} />
         <Route path="/legajos" element={<LegajoHistory />} />
         <Route path="/interno" element={<InternoHistory />} />
+        <Route path="/playa" element={<PlayaStatus />} />
+
         <Route
           path="/"
           element={user ? <InternosStatus /> : <Login onLogin={setUser} />}

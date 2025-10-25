@@ -36,6 +36,7 @@ export default function Layout({ children, user }) {
     { label: "Internos", to: "/internos" },
     { label: "Por Interno", to: "/interno" },
     { label: "Por Legajo", to: "/legajos" },
+    { label: "Playa", to: "/playa" },
   ];
 
   return (
