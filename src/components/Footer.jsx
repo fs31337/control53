@@ -10,6 +10,8 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import BadgeIcon from "@mui/icons-material/Badge";
+import Bild from "@mui/icons-material/BusinessCenter";
+
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Footer() {
@@ -37,6 +39,9 @@ export default function Footer() {
       case "/legajos":
         setValue(4);
         break;
+      case "/playa":
+        setValue(5);
+        break;
       default:
         break;
     }
@@ -55,10 +60,13 @@ export default function Footer() {
         navigate("/internos");
         break;
       case 3:
-        navigate("/interno");
+        navigate("/playa");
         break;
       case 4:
         navigate("/legajos");
+        break;
+      case 5:
+        navigate("/playa");
         break;
       default:
         break;
@@ -85,11 +93,12 @@ export default function Footer() {
         <BottomNavigationAction label="Escanear" icon={<QrCodeScannerIcon />} />
         <BottomNavigationAction label="Manual" icon={<EditNoteIcon />} />
         <BottomNavigationAction label="Internos" icon={<ListAltIcon />} />
-        <BottomNavigationAction
+        {/* <BottomNavigationAction
           label="Por Interno"
           icon={<PersonSearchIcon />}
         />
-        <BottomNavigationAction label="Por Legajo" icon={<BadgeIcon />} />
+        <BottomNavigationAction label="Por Legajo" icon={<BadgeIcon />} /> */}
+        <BottomNavigationAction label="Playa" icon={<Bild />} />
       </BottomNavigation>
     </Paper>
   );
