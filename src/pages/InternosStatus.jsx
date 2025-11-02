@@ -64,7 +64,7 @@ export default function InternosStatus() {
       firstRender = false;
     };
 
-    // Suscribirse a Firestore según haya subcategoría o no
+    // Suscribirse a Firestore según haya categoria o no
     const unsubscribe = subscribeToCategoryChanges(category, handleUpdate);
 
     return () => unsubscribe();
@@ -123,7 +123,6 @@ export default function InternosStatus() {
           alignItems={{ xs: "flex-start", sm: "center" }}
           mb={8}
         >
-          <Typography variant="h5">Estado de internos</Typography>
           <CategoryFilter
             categoria={category}
             onChange={(cat) => {
