@@ -16,9 +16,18 @@ export default function ManualForm() {
   const [interno, setInterno] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   const user = auth.currentUser;
   const legajo = user ? user.email.split("@")[0] : "";
+
+  const handleClear = () => {
+    setInterno("");
+    setCategoria("");
+    setMensaje("");
+    setError("");
+    setResetTrigger((prev) => prev + 1); // 🔁 reinicia el filtro
+  };
 
   const handleSubmit = async () => {
     setError("");
@@ -37,7 +46,6 @@ export default function ManualForm() {
 
       setMensaje(`Registro guardado correctamente para el interno ${interno}`);
       setInterno("");
-      setCategoria("");
     } catch (err) {
       setError("Error guardando: " + err.message);
     }
@@ -54,14 +62,11 @@ export default function ManualForm() {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 480 }}>
-        <Typography variant="h5" textAlign="center" mb={2}>
-          Carga Manual
-        </Typography>
-
         <Stack spacing={3} mb={2}>
-          {/* ✅ Selector de categoría y subcategoría visual */}
+          {/* ✅ Selector de categoría visual*/}
           <CategoryFilter
             categoria={categoria}
+            resetTrigger={resetTrigger}
             onChange={(cat) => {
               setCategoria(cat);
             }}
@@ -81,15 +86,7 @@ export default function ManualForm() {
           <Button variant="contained" color="primary" onClick={handleSubmit}>
             Guardar
           </Button>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              setInterno("");
-              setCategoria("");
-              setMensaje("");
-              setError("");
-            }}
-          >
+          <Button variant="outlined" onClick={handleClear}>
             Limpiar
           </Button>
         </Stack>
