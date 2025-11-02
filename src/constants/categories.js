@@ -1,7 +1,9 @@
-// src/constants/categories.js
-export const CATEGORIAS = {
-  interiores: ["pisos", "aereo"],
-  carroceria: ["carroceria", "radiadores"],
-  motores: ["motores"],
-  aire_acondicionado: ["techo", "interno"],
-};
+export const CATEGORIAS = [
+  "interiores_pisos",
+  "interiores_aereo",
+  "carroceria",
+  "radiadores",
+  "motores",
+  "aire_techo",
+  "aire_interno",
+];

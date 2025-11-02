@@ -65,8 +65,6 @@ export default function InternoHistory() {
               <TableCell>Fecha</TableCell>
               <TableCell>Legajo</TableCell>
               <TableCell>Categoría</TableCell>
-              <TableCell>SubCategoria</TableCell>
-              <TableCell>Observaciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -80,8 +78,6 @@ export default function InternoHistory() {
                   <TableCell>{fecha}</TableCell>
                   <TableCell>{r.legajo}</TableCell>
                   <TableCell>{r.categoria}</TableCell>
-                  <TableCell>{r.subcategoria}</TableCell>
-                  <TableCell>{r.observaciones || "—"}</TableCell>
                 </TableRow>
               );
             })}

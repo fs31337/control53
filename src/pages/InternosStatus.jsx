@@ -11,7 +11,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import InspectionDetailsDialog from "../components/InspectionDetailDialog";
-import { subscribeToCategoryAndSubcategoryChanges } from "../services";
+import { subscribeToCategoryChanges } from "../services";
 import CategoryFilter from "../components/CategoryFilter";
 
 dayjs.extend(relativeTime);
@@ -28,7 +28,6 @@ function colorByDays(deltaDays) {
 
 export default function InternosStatus() {
   const [category, setCategory] = useState("limpieza");
-  const [subCategory, setSubCategory] = useState("");
   const [search, setSearch] = useState("");
   const [sortByStale, setSortByStale] = useState("none");
   const [lastMap, setLastMap] = useState(new Map());
@@ -40,7 +39,7 @@ export default function InternosStatus() {
   useEffect(() => {
     if (!category) return;
 
-    const cacheKey = `lastMap_${category}_${subCategory}`;
+    const cacheKey = `lastMap_${category}`;
 
     // Cargar cache inicial
     const cached = sessionStorage.getItem(cacheKey);
@@ -66,14 +65,10 @@ export default function InternosStatus() {
     };
 
     // Suscribirse a Firestore según haya subcategoría o no
-    const unsubscribe = subscribeToCategoryAndSubcategoryChanges(
-      category,
-      subCategory,
-      handleUpdate
-    );
+    const unsubscribe = subscribeToCategoryChanges(category, handleUpdate);
 
     return () => unsubscribe();
-  }, [category, subCategory]);
+  }, [category]);
 
   const rows = useMemo(() => {
     const term = search.trim();
@@ -131,10 +126,8 @@ export default function InternosStatus() {
           <Typography variant="h5">Estado de internos</Typography>
           <CategoryFilter
             categoria={category}
-            subcategoria={subCategory}
-            onChange={(cat, sub) => {
+            onChange={(cat) => {
               setCategory(cat);
-              setSubCategory(sub);
             }}
           />
           <TextField

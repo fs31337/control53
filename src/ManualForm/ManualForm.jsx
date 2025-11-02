@@ -13,9 +13,7 @@ import CategoryFilter from "../components/CategoryFilter"; // 👈 Importa tu co
 
 export default function ManualForm() {
   const [categoria, setCategoria] = useState("");
-  const [subcategoria, setSubcategoria] = useState("");
   const [interno, setInterno] = useState("");
-  const [observaciones, setObservaciones] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
 
@@ -27,7 +25,6 @@ export default function ManualForm() {
     setMensaje("");
 
     if (!categoria) return setError("Debes seleccionar una categoría");
-    if (!subcategoria) return setError("Debes seleccionar una subcategoría");
     if (!interno.trim()) return setError("Debes ingresar el número de interno");
 
     try {
@@ -35,16 +32,12 @@ export default function ManualForm() {
         legajo,
         interno,
         categoria,
-        subcategoria,
-        observaciones,
         metodo: "manual",
       });
 
       setMensaje(`Registro guardado correctamente para el interno ${interno}`);
       setInterno("");
-      setObservaciones("");
       setCategoria("");
-      setSubcategoria("");
     } catch (err) {
       setError("Error guardando: " + err.message);
     }
@@ -69,10 +62,8 @@ export default function ManualForm() {
           {/* ✅ Selector de categoría y subcategoría visual */}
           <CategoryFilter
             categoria={categoria}
-            subcategoria={subcategoria}
-            onChange={(cat, sub) => {
+            onChange={(cat) => {
               setCategoria(cat);
-              setSubcategoria(sub);
             }}
           />
 
@@ -82,16 +73,6 @@ export default function ManualForm() {
             label="Número de interno"
             value={interno}
             onChange={(e) => setInterno(e.target.value)}
-          />
-
-          {/* Observaciones */}
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Observaciones"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
           />
         </Stack>
 
@@ -104,9 +85,7 @@ export default function ManualForm() {
             variant="outlined"
             onClick={() => {
               setInterno("");
-              setObservaciones("");
               setCategoria("");
-              setSubcategoria("");
               setMensaje("");
               setError("");
             }}
