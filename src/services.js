@@ -18,9 +18,7 @@ export async function addInspection({
   legajo,
   interno,
   categoria,
-  subcategoria,
   accion = "",
-  observaciones = "",
   metodo = "qr",
 }) {
   const inspections = collection(db, "inspections");
@@ -28,9 +26,7 @@ export async function addInspection({
     legajo,
     interno,
     categoria,
-    subcategoria,
     accion,
-    observaciones,
     metodo,
     createdAt: serverTimestamp(),
   });
@@ -81,23 +77,17 @@ export async function fetchInspections({
 //   return map;
 // }
 /**
- * Devuelve un Map con la última inspección por interno para una categoría y subcategoría.
+ * Devuelve un Map con la última inspección por interno para una categoría
  * @param {string} category - Ej: "interiores"
- * @param {string} subcategory - Ej: "pisos"
  * @param {number} maxFetch - Límite de documentos a leer
  * @returns {Promise<Map<string, any>>}
  */
-export async function fetchLastByInternoForCategoryAndSubcategory(
-  category,
-  subcategory,
-  maxFetch = 3000
-) {
+export async function fetchLastByInternoForCategory(category, maxFetch = 3000) {
   const inspectionsRef = collection(db, "inspections");
 
   const q = query(
     inspectionsRef,
     where("categoria", "==", category),
-    where("subcategoria", "==", subcategory),
     orderBy("createdAt", "desc"),
     limit(maxFetch)
   );
@@ -115,27 +105,18 @@ export async function fetchLastByInternoForCategoryAndSubcategory(
   return map;
 }
 /**
- * Suscribe en tiempo real a una categoría + subcategoría.
+ * Suscribe en tiempo real a una categoría.
  * @param {string} category - Ej: "interiores"
- * @param {string} subcategory - Ej: "pisos"
  * @param {(data: Map<string, any>, changedKeys: Set<string>) => void} callback
  */
-export function subscribeToCategoryAndSubcategoryChanges(
-  category,
-  subcategory,
-  callback
-) {
+export function subscribeToCategoryChanges(category, callback) {
   const q = query(
     collection(db, "inspections"),
-    where("categoria", "==", category),
-    where("subcategoria", "==", subcategory)
+    where("categoria", "==", category)
   );
 
   const unsubscribe = onSnapshot(q, async (snapshot) => {
-    const newData = await fetchLastByInternoForCategoryAndSubcategory(
-      category,
-      subcategory
-    );
+    const newData = await fetchLastByInternoForCategory(category);
 
     const changed = new Set();
     snapshot.docChanges().forEach((change) => {

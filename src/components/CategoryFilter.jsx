@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Stack,
   Typography,
@@ -7,58 +8,54 @@ import {
 import { CATEGORIAS } from "../constants/categories";
 
 /**
- * Componente de filtro de categorías y subcategorías
- * @param {string} categoria - Categoría seleccionada
- * @param {string} subcategoria - Subcategoría seleccionada
- * @param {function} onChange - Callback (categoria, subcategoria)
+ * CategoryFilter simple, más grande y persistente
  */
-export default function CategoryFilter({ categoria, subcategoria, onChange }) {
+export default function CategoryFilter({ categoria, onChange, resetTrigger }) {
+  const [selected, setSelected] = useState(
+    () => localStorage.getItem("ultimaCategoria") || categoria || ""
+  );
+
+  // 🔄 Reset manual (al presionar "Limpiar")
+  useEffect(() => {
+    if (!resetTrigger) return;
+    setSelected("");
+    localStorage.removeItem("ultimaCategoria");
+  }, [resetTrigger]);
+
+  const handleChange = (_, val) => {
+    if (!val) return;
+    setSelected(val);
+    localStorage.setItem("ultimaCategoria", val);
+    onChange(val);
+  };
+
   return (
     <Stack direction="column" spacing={1}>
-      {/* Selector de categoría principal */}
-      <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-        Categoría
-      </Typography>
-
       <ToggleButtonGroup
-        size="small"
+        size="large"
         exclusive
-        value={categoria}
-        onChange={(_, val) => val && onChange(val, "")}
+        value={selected}
+        onChange={handleChange}
+        sx={{
+          flexWrap: "wrap",
+          justifyContent: "center",
+          "& .MuiToggleButton-root": {
+            fontSize: "1rem",
+            padding: "14px 20px",
+            margin: "4px",
+            borderRadius: "10px",
+            minWidth: "120px",
+            minHeight: "60px",
+            fontWeight: "bold",
+          },
+        }}
       >
-        {Object.keys(CATEGORIAS).map((cat) => (
+        {CATEGORIAS.map((cat) => (
           <ToggleButton key={cat} value={cat}>
             {cat.replace("_", " ")}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
-
-      {/* Selector de subcategoría (solo si aplica) */}
-      {categoria &&
-        Array.isArray(CATEGORIAS[categoria]) &&
-        CATEGORIAS[categoria].length > 0 && (
-          <>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-              sx={{ mt: 1 }}
-            >
-              Subcategoría
-            </Typography>
-            <ToggleButtonGroup
-              size="small"
-              exclusive
-              value={subcategoria}
-              onChange={(_, val) => val && onChange(categoria, val)}
-            >
-              {CATEGORIAS[categoria].map((sub) => (
-                <ToggleButton key={sub} value={sub}>
-                  {sub}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </>
-        )}
     </Stack>
   );
 }

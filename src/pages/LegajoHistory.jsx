@@ -65,8 +65,6 @@ export default function LegajoHistory() {
               <TableCell>Fecha</TableCell>
               <TableCell>Interno</TableCell>
               <TableCell>Categoría</TableCell>
-              <TableCell>SubCategoria</TableCell>
-              <TableCell>Observaciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -80,9 +78,6 @@ export default function LegajoHistory() {
                   <TableCell>{fecha}</TableCell>
                   <TableCell>{r.interno}</TableCell>
                   <TableCell>{r.categoria}</TableCell>
-                  <TableCell>{r.subcategoria}</TableCell>
-
-                  <TableCell>{r.observaciones || "Sin observacion"}</TableCell>
                 </TableRow>
               );
             })}

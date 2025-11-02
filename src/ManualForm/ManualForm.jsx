@@ -13,21 +13,27 @@ import CategoryFilter from "../components/CategoryFilter"; // 👈 Importa tu co
 
 export default function ManualForm() {
   const [categoria, setCategoria] = useState("");
-  const [subcategoria, setSubcategoria] = useState("");
   const [interno, setInterno] = useState("");
-  const [observaciones, setObservaciones] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [resetTrigger, setResetTrigger] = useState(0);
 
   const user = auth.currentUser;
   const legajo = user ? user.email.split("@")[0] : "";
+
+  const handleClear = () => {
+    setInterno("");
+    setCategoria("");
+    setMensaje("");
+    setError("");
+    setResetTrigger((prev) => prev + 1); // 🔁 reinicia el filtro
+  };
 
   const handleSubmit = async () => {
     setError("");
     setMensaje("");
 
     if (!categoria) return setError("Debes seleccionar una categoría");
-    if (!subcategoria) return setError("Debes seleccionar una subcategoría");
     if (!interno.trim()) return setError("Debes ingresar el número de interno");
 
     try {
@@ -35,16 +41,11 @@ export default function ManualForm() {
         legajo,
         interno,
         categoria,
-        subcategoria,
-        observaciones,
         metodo: "manual",
       });
 
       setMensaje(`Registro guardado correctamente para el interno ${interno}`);
       setInterno("");
-      setObservaciones("");
-      setCategoria("");
-      setSubcategoria("");
     } catch (err) {
       setError("Error guardando: " + err.message);
     }
@@ -61,18 +62,13 @@ export default function ManualForm() {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 480 }}>
-        <Typography variant="h5" textAlign="center" mb={2}>
-          Carga Manual
-        </Typography>
-
         <Stack spacing={3} mb={2}>
-          {/* ✅ Selector de categoría y subcategoría visual */}
+          {/* ✅ Selector de categoría visual*/}
           <CategoryFilter
             categoria={categoria}
-            subcategoria={subcategoria}
-            onChange={(cat, sub) => {
+            resetTrigger={resetTrigger}
+            onChange={(cat) => {
               setCategoria(cat);
-              setSubcategoria(sub);
             }}
           />
 
@@ -83,16 +79,6 @@ export default function ManualForm() {
             value={interno}
             onChange={(e) => setInterno(e.target.value)}
           />
-
-          {/* Observaciones */}
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Observaciones"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-          />
         </Stack>
 
         {/* Botones */}
@@ -100,17 +86,7 @@ export default function ManualForm() {
           <Button variant="contained" color="primary" onClick={handleSubmit}>
             Guardar
           </Button>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              setInterno("");
-              setObservaciones("");
-              setCategoria("");
-              setSubcategoria("");
-              setMensaje("");
-              setError("");
-            }}
-          >
+          <Button variant="outlined" onClick={handleClear}>
             Limpiar
           </Button>
         </Stack>

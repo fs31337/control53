@@ -15,8 +15,6 @@ import CategoryFilter from "../components/CategoryFilter"; // 👈 Importa el mi
 export default function Scanner() {
   const videoRef = useRef(null);
   const [categoria, setCategoria] = useState("");
-  const [subcategoria, setSubcategoria] = useState("");
-  const [observaciones, setObservaciones] = useState("");
   const [interno, setInterno] = useState("");
   const [scanned, setScanned] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -69,7 +67,6 @@ export default function Scanner() {
     setMensaje("");
 
     if (!categoria) return setError("Debes seleccionar una categoría");
-    if (!subcategoria) return setError("Debes seleccionar una subcategoría");
     if (!interno) return setError("No se detectó el número de interno");
 
     try {
@@ -77,16 +74,11 @@ export default function Scanner() {
         legajo,
         interno,
         categoria,
-        subcategoria,
-        observaciones,
         metodo: "qr",
       });
 
       setMensaje(`Registro guardado correctamente para interno ${interno}`);
       setInterno("");
-      setObservaciones("");
-      setCategoria("");
-      setSubcategoria("");
       setScanned(false);
     } catch (err) {
       setError("Error guardando: " + err.message);
@@ -104,29 +96,13 @@ export default function Scanner() {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 480 }}>
-        <Typography variant="h5" textAlign="center" mb={2}>
-          Escanear QR
-        </Typography>
-
         <Stack spacing={2} mb={2}>
-          {/* ✅ Filtro de categoría/subcategoría */}
+          {/* ✅ Filtro de categoría */}
           <CategoryFilter
             categoria={categoria}
-            subcategoria={subcategoria}
-            onChange={(cat, sub) => {
+            onChange={(cat) => {
               setCategoria(cat);
-              setSubcategoria(sub);
             }}
-          />
-
-          {/* Observaciones */}
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Observaciones"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
           />
         </Stack>
 
