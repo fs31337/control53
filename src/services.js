@@ -18,9 +18,7 @@ export async function addInspection({
   legajo,
   interno,
   categoria,
-  subcategoria,
   accion = "",
-  observaciones = "",
   metodo = "qr",
 }) {
   const inspections = collection(db, "inspections");
@@ -28,9 +26,7 @@ export async function addInspection({
     legajo,
     interno,
     categoria,
-    subcategoria,
     accion,
-    observaciones,
     metodo,
     createdAt: serverTimestamp(),
   });
@@ -81,7 +77,7 @@ export async function fetchInspections({
 //   return map;
 // }
 /**
- * Devuelve un Map con la última inspección por interno para una categoría y subcategoría.
+ * Devuelve un Map con la última inspección por interno para una categoría
  * @param {string} category - Ej: "interiores"
  * @param {number} maxFetch - Límite de documentos a leer
  * @returns {Promise<Map<string, any>>}
@@ -109,7 +105,7 @@ export async function fetchLastByInternoForCategory(category, maxFetch = 3000) {
   return map;
 }
 /**
- * Suscribe en tiempo real a una categoría + subcategoría.
+ * Suscribe en tiempo real a una categoría.
  * @param {string} category - Ej: "interiores"
  * @param {(data: Map<string, any>, changedKeys: Set<string>) => void} callback
  */
