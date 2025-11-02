@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { addInspection } from "../services";
 import { auth } from "../../firebaseConfig";
-import { Box, Stack, Typography, Button, Alert } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+} from "@mui/material";
 import CategoryFilter from "../components/CategoryFilter"; // 👈 Importa el mismo componente visual
 
 export default function Scanner() {
@@ -72,7 +79,6 @@ export default function Scanner() {
 
       setMensaje(`Registro guardado correctamente para interno ${interno}`);
       setInterno("");
-      setCategoria("");
       setScanned(false);
     } catch (err) {
       setError("Error guardando: " + err.message);
@@ -90,10 +96,6 @@ export default function Scanner() {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 480 }}>
-        <Typography variant="h5" textAlign="center" mb={2}>
-          Escanear QR
-        </Typography>
-
         <Stack spacing={2} mb={2}>
           {/* ✅ Filtro de categoría */}
           <CategoryFilter
